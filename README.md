@@ -5,7 +5,10 @@ arguments, format the message and send it to the desired channel. Then the bot w
 
 Current support:
 
-- torrents
+- torrents (triggered when QBitTorrent finishes a download)
+
+    add the following to the QBitTorrent settings under `Tools>Options...>Downloads>Run on torrent finished:`
+
     ```bat
     .\path\to\run.bat torrent --name "%N" --category "%L" --tags "%G" --content-path "%F"
     --root-path "%R" --save-path "%D" --files "%C" --byte-size "%Z" --tracker "%T"
@@ -13,7 +16,8 @@ Current support:
 
 ## Setup
 
-To use, ensure the following environment variables are set, or in a `.env` file:
+To use, ensure the following environment variables are set, or in a `.env` file in the same directory as the current
+working directory.
 
 ```ini
 token=... # required
