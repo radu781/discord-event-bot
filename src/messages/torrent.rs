@@ -1,6 +1,8 @@
 use clap::Args;
 use serenity::all::{Color, Colour, CreateEmbed, CreateMessage};
 
+use crate::anilist::graphql::anime_info;
+
 use super::utils::add_embed;
 
 #[derive(Args)]
@@ -43,10 +45,17 @@ pub(crate) struct TorrentMessage {
 }
 
 impl TorrentMessage {
-    pub(crate) fn message(&self) -> CreateMessage {
+    pub(crate) async fn message(&self) -> CreateMessage {
         let mut embed = CreateEmbed::new()
             .title("Download done")
             .color(Self::category_to_color(&self.category));
+
+        if let Some(category) = &self.category {
+            if category == "Anime" {
+                embed =
+                    Self::extra_anime_fields(embed, self.save_path.clone().unwrap().as_str()).await;
+            }
+        }
         embed = add_embed(embed, "Name", &self.name);
         embed = add_embed(embed, "Category", &self.category);
         embed = add_embed(embed, "Tags", &self.tags);
@@ -70,5 +79,29 @@ impl TorrentMessage {
             },
             None => Color::from_rgb(123, 211, 234),
         }
+    }
+
+    async fn extra_anime_fields(mut embed: CreateEmbed, title: &str) -> CreateEmbed {
+        let info = anime_info(title).await;
+        println!("{:#?}", &info);
+        embed = embed.image(info.data.media.cover_image.extra_large);
+        embed = embed.title(format!("{} download done", info.data.media.title.english));
+        embed = embed.field(
+            "Airing season",
+            format!(
+                "{} {}",
+                info.data.media.season_year,
+                info.data.media.season.to_lowercase()
+            ),
+            false,
+        );
+        if let Some(next) = info.data.media.next_airing_episode {
+            embed = embed.field(
+                "Next episode",
+                format!("<t:{}:R> <t:{}:F>", next.airing_at, next.airing_at),
+                false,
+            );
+        }
+        embed
     }
 }

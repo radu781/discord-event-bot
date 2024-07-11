@@ -9,9 +9,9 @@ pub(crate) enum MessageType {
 }
 
 impl MessageType {
-    pub(crate) fn message(&self) -> CreateMessage {
+    pub(crate) async fn message(&self) -> CreateMessage {
         match self {
-            MessageType::Torrent(m) => m.message(),
+            MessageType::Torrent(m) => m.message().await,
         }
     }
 
