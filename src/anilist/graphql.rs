@@ -7,28 +7,28 @@ pub(crate) async fn anime_info(title: &str) -> Response {
     println!("title is: {:?}", title);
     let title = anime_name(title);
     println!("title after is: {:?}", title);
-    let query = json!({"query": r#"
-        {
-    Media(type: ANIME, search: "My-Hero-Academia-Season-7") {
-        coverImage {
+    let query = json!({"query": format!(r#"
+            {{
+    Media(type: ANIME, search: "{title}") {{
+        coverImage {{
             extraLarge
-        }
-        title {
+        }}
+        title {{
             english
-        }
+        }}
         season
         seasonYear
         episodes
         status
-        nextAiringEpisode {
+        nextAiringEpisode {{
             airingAt
             episode
-        }
-    }
-}"#});
+        }}
+    }}
+}}"#)});
 
-    // let variables = json!({"search": title});
-    // let body = json!({"query": query, "variables": variables});
+    let variables = json!({"search": title});
+    let body = json!({"query": query, "variables": variables});
     println!("{:?}", query);
     // let body = json!({"query": query});
     reqwest::Client::new()
