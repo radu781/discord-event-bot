@@ -50,8 +50,9 @@ impl TorrentMessage {
             .title("Download done")
             .color(Self::category_to_color(&self.category));
 
+        // TODO: make more robust
         if let Some(category) = &self.category {
-            if category == "Anime" {
+            if category.to_lowercase().as_str() == "anime" {
                 embed =
                     Self::extra_anime_fields(embed, self.save_path.clone().unwrap().as_str()).await;
             }
@@ -59,12 +60,12 @@ impl TorrentMessage {
         embed = add_embed(embed, "Name", &self.name);
         embed = add_embed(embed, "Category", &self.category);
         embed = add_embed(embed, "Tags", &self.tags);
-        embed = add_embed(embed, "Content path", &self.content_path);
+        // embed = add_embed(embed, "Content path", &self.content_path);
         embed = add_embed(embed, "Root path", &self.root_path);
-        embed = add_embed(embed, "Save path", &self.save_path);
+        embed = add_embed(embed, "Folder", &self.save_path);
         embed = add_embed(embed, "Files", &self.files);
-        embed = add_embed(embed, "Byte size", &self.byte_size);
-        embed = add_embed(embed, "Tracker", &self.tracker);
+        embed = add_embed(embed, "Size", &Self::byte_size_readable(&self.byte_size));
+        // embed = add_embed(embed, "Tracker", &self.tracker);
         embed = add_embed(embed, "Info hash v1", &self.info_hash_v1);
         embed = add_embed(embed, "Info hash v2", &self.info_hash_v2);
         embed = add_embed(embed, "Id", &self.id);
@@ -78,6 +79,25 @@ impl TorrentMessage {
                 _ => Color::from_rgb(123, 211, 234),
             },
             None => Color::from_rgb(123, 211, 234),
+        }
+    }
+
+    fn byte_size_readable(byte_size: &Option<String>) -> Option<String> {
+        match byte_size {
+            Some(bytes) => match bytes.parse::<u64>() {
+                Ok(b) => {
+                    let units = ["B", "KB", "MB", "GB", "TB"];
+                    let mut idx = 0;
+                    let mut b = b as f64;
+                    while b > 1024.0 && idx < units.len() - 1 {
+                        b /= 1024.0;
+                        idx += 1;
+                    }
+                    Some(format!("{:.2} {}", b, units[idx]))
+                }
+                Err(_) => Some("?".to_owned()),
+            },
+            None => None,
         }
     }
 
