@@ -1,7 +1,7 @@
 use clap::Parser;
 use dotenv;
-mod messages;
 mod anilist;
+mod messages;
 use messages::message_type::MessageType;
 use serenity::all::standard::macros::command;
 use std::env;

@@ -1,7 +1,7 @@
+use crate::anilist::objects::Response;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
-
-use crate::anilist::objects::Response;
+use std::path;
 
 pub(crate) async fn anime_info(title: &str) -> Response {
     println!("title is: {:?}", title);
@@ -43,10 +43,53 @@ pub(crate) async fn anime_info(title: &str) -> Response {
         .expect("Parse failed")
 }
 
-fn anime_name(title: &str) -> &str {
-    if let Some(idx) = title.rfind('\\') {
-        title.split_at(idx).1
-    } else {
-        title
+fn anime_name(title: &str) -> String {
+    let ignore_dirs = ["season"];
+    title
+        .to_owned()
+        .split(path::MAIN_SEPARATOR_STR)
+        .collect::<Vec<&str>>()
+        .into_iter()
+        .rev()
+        .find(|s| {
+            !ignore_dirs
+                .iter()
+                .any(|dir| s.to_lowercase().contains(&dir.to_lowercase()))
+        })
+        .unwrap()
+        .to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn with_season() {
+        assert_eq!(
+            anime_name("E:\\anime\\Makeine\\Season 1"),
+            "Makeine".to_string()
+        );
+    }
+
+    #[test]
+    fn with_2_seasons() {
+        assert_eq!(
+            anime_name("E:\\anime\\Makeine\\Season 1\\Season 2"),
+            "Makeine".to_string()
+        );
+    }
+    
+    #[test]
+    fn with_interlaced_season() {
+        assert_eq!(
+            anime_name("E:\\anime\\Season 1\\Makeine\\Season 1"),
+            "Makeine".to_string()
+        );
+    }
+
+    #[test]
+    fn no_season() {
+        assert_eq!(anime_name("E:\\anime\\Makeine"), "Makeine".to_string());
     }
 }

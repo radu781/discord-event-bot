@@ -1,17 +1,17 @@
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub(crate) struct Title {
     pub(crate) english: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub(crate) struct CoverImage {
     #[serde(rename = "extraLarge")]
     pub(crate) extra_large: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub(crate) struct Episode {
     #[serde(rename = "airingAt")]
     pub(crate) airing_at: u32,
@@ -19,7 +19,7 @@ pub(crate) struct Episode {
     pub(crate) episode: u16,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub(crate) struct Media {
     pub(crate) title: Title,
 
@@ -39,13 +39,13 @@ pub(crate) struct Media {
     pub(crate) next_airing_episode: Option<Episode>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub(crate) struct Data {
     #[serde(rename = "Media")]
     pub(crate) media: Media,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub(crate) struct Response {
     pub(crate) data: Data,
 }
