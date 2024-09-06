@@ -44,7 +44,7 @@ pub(crate) async fn anime_info(title: &str) -> Response {
 }
 
 fn anime_name(title: &str) -> String {
-    let ignore_dirs = ["season"];
+    let ignore_dirs = ["season", "movies", "music"];
     title
         .to_owned()
         .split(path::MAIN_SEPARATOR_STR)
@@ -91,5 +91,21 @@ mod tests {
     #[test]
     fn no_season() {
         assert_eq!(anime_name("E:\\anime\\Makeine"), "Makeine".to_string());
+    }
+
+    #[test]
+    fn with_movie() {
+        assert_eq!(
+            anime_name("E:\\anime\\Makeine\\Movies"),
+            "Makeine".to_string()
+        );
+    }
+
+    #[test]
+    fn with_typo() {
+        assert_ne!(
+            anime_name("E:\\anime\\Makeine\\movieeeee"),
+            "Makeine".to_string()
+        );
     }
 }

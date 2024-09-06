@@ -103,7 +103,6 @@ impl TorrentMessage {
 
     async fn extra_anime_fields(mut embed: CreateEmbed, title: &str) -> CreateEmbed {
         let info = anime_info(title).await;
-        println!("{:#?}", &info);
         embed = embed.image(info.data.media.cover_image.extra_large);
         embed = embed.title(format!("{} download done", info.data.media.title.english));
         embed = embed.field(
