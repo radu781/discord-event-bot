@@ -1,3 +1,5 @@
+use std::{fmt::Display, str::FromStr};
+
 use clap::Args;
 use serenity::all::{Color, Colour, CreateEmbed, CreateMessage};
 
@@ -11,7 +13,7 @@ pub(crate) struct TorrentMessage {
     pub(crate) name: Option<String>,
 
     #[arg(long)]
-    pub(crate) category: Option<String>,
+    pub(crate) category: Option<Category>,
 
     #[arg(long)]
     pub(crate) tags: Option<String>,
@@ -50,12 +52,8 @@ impl TorrentMessage {
             .title("Download done")
             .color(Self::category_to_color(&self.category));
 
-        // TODO: make more robust
         if let Some(category) = &self.category {
-            if category.to_lowercase().as_str() == "anime" {
-                embed =
-                    Self::extra_anime_fields(embed, self.save_path.clone().unwrap().as_str()).await;
-            }
+            embed = category.extra_fields(embed, &self.save_path).await
         }
         embed = add_embed(embed, "Name", &self.name);
         embed = add_embed(embed, "Category", &self.category);
@@ -72,10 +70,10 @@ impl TorrentMessage {
         CreateMessage::new().add_embed(embed)
     }
 
-    fn category_to_color(category: &Option<String>) -> Colour {
+    fn category_to_color(category: &Option<Category>) -> Colour {
         match category {
-            Some(category) => match category.as_str() {
-                "Anime" => Color::from_rgb(116, 105, 182),
+            Some(category) => match category {
+                Category::Anime => Color::from_rgb(116, 105, 182),
                 _ => Color::from_rgb(123, 211, 234),
             },
             None => Color::from_rgb(123, 211, 234),
@@ -100,27 +98,68 @@ impl TorrentMessage {
             None => None,
         }
     }
+}
 
-    async fn extra_anime_fields(mut embed: CreateEmbed, title: &str) -> CreateEmbed {
-        let info = anime_info(title).await;
-        embed = embed.image(info.data.media.cover_image.extra_large);
-        embed = embed.title(format!("{} download done", info.data.media.title.english));
-        embed = embed.field(
-            "Airing season",
-            format!(
-                "{} {}",
-                info.data.media.season_year,
-                info.data.media.season.to_lowercase()
-            ),
-            false,
-        );
-        if let Some(next) = info.data.media.next_airing_episode {
-            embed = embed.field(
-                "Next episode",
-                format!("<t:{}:R> <t:{}:F>", next.airing_at, next.airing_at),
-                false,
-            );
+#[derive(Debug, Clone)]
+pub(crate) enum Category {
+    Anime,
+    Game,
+    Other(String),
+}
+
+impl Category {
+    async fn extra_fields(&self, mut embed: CreateEmbed, save_path: &Option<String>) -> CreateEmbed {
+        match self {
+            Category::Anime => match save_path {
+                Some(path) => {
+                    let info = anime_info(path).await;
+                    embed = embed
+                        .image(info.data.media.cover_image.extra_large)
+                        .title(format!("{} download done", info.data.media.title.english))
+                        .field(
+                            "Airing season",
+                            format!(
+                                "{} {}",
+                                info.data.media.season_year,
+                                info.data.media.season.to_lowercase()
+                            ),
+                            false,
+                        );
+                    if let Some(next) = info.data.media.next_airing_episode {
+                        embed = embed.field(
+                            "Next episode",
+                            format!("<t:{}:R> <t:{}:F>", next.airing_at, next.airing_at),
+                            false,
+                        );
+                    }
+                    embed
+                }
+                None => embed,
+            },
+            Category::Game => embed,
+            Category::Other(_) => embed,
         }
-        embed
+    }
+}
+
+impl FromStr for Category {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "anime" => Ok(Self::Anime),
+            "game" => Ok(Self::Game),
+            other => Ok(Self::Other(other.to_owned())),
+        }
+    }
+}
+
+impl Display for Category {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Category::Anime => write!(f, "anime"),
+            Category::Game => write!(f, "game"),
+            Category::Other(other) => write!(f, "{other}"),
+        }
     }
 }
