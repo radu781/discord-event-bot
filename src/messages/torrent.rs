@@ -1,13 +1,10 @@
-use std::{fmt::Display, str::FromStr};
-
+use super::utils::add_embed;
+use crate::anilist::graphql::anime_info;
 use clap::Args;
 use serenity::all::{Color, Colour, CreateEmbed, CreateMessage};
+use std::{fmt::Display, str::FromStr};
 
-use crate::anilist::graphql::anime_info;
-
-use super::utils::add_embed;
-
-#[derive(Args)]
+#[derive(Args, Debug)]
 pub(crate) struct TorrentMessage {
     #[arg(long)]
     pub(crate) name: Option<String>,
@@ -72,11 +69,8 @@ impl TorrentMessage {
 
     fn category_to_color(category: &Option<Category>) -> Colour {
         match category {
-            Some(category) => match category {
-                Category::Anime => Color::from_rgb(116, 105, 182),
-                _ => Color::from_rgb(123, 211, 234),
-            },
-            None => Color::from_rgb(123, 211, 234),
+            Some(Category::Anime) => Color::from_rgb(116, 105, 182),
+            _ => Color::from_rgb(123, 211, 234),
         }
     }
 
@@ -108,14 +102,26 @@ pub(crate) enum Category {
 }
 
 impl Category {
-    async fn extra_fields(&self, mut embed: CreateEmbed, save_path: &Option<String>) -> CreateEmbed {
+    async fn extra_fields(
+        &self,
+        mut embed: CreateEmbed,
+        save_path: &Option<String>,
+    ) -> CreateEmbed {
         match self {
             Category::Anime => match save_path {
                 Some(path) => {
                     let info = anime_info(path).await;
+                    let media_title = info.data.media.title;
+                    let title = media_title.english.unwrap_or(media_title.romaji.unwrap_or(
+                        media_title.native.unwrap_or_else(|| {
+                            eprintln!("No title language found");
+                            "???".to_owned()
+                        }),
+                    ));
+
                     embed = embed
                         .image(info.data.media.cover_image.extra_large)
-                        .title(format!("{} download done", info.data.media.title.english))
+                        .title(format!("{title} download done"))
                         .field(
                             "Airing season",
                             format!(

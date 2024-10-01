@@ -5,6 +5,7 @@ use std::path;
 
 pub(crate) async fn anime_info(path: &str) -> Response {
     let title = anime_name(path);
+    println!("Found title: {title}");
     let query = json!({"query": format!(r#"
             {{
     Media(type: ANIME, search: "{title}") {{
@@ -13,6 +14,8 @@ pub(crate) async fn anime_info(path: &str) -> Response {
         }}
         title {{
             english
+            romaji
+            native
         }}
         season
         seasonYear
@@ -25,22 +28,22 @@ pub(crate) async fn anime_info(path: &str) -> Response {
     }}
 }}"#)});
 
+    let nice_query = query.to_string().replace("\t", "");
     reqwest::Client::new()
         .post("https://graphql.anilist.co")
         .json(&query)
         .header(CONTENT_TYPE, "application/json")
         .send()
         .await
-        .expect("Send failed")
+        .unwrap_or_else(|_| panic!("Send failed for request {nice_query}"))
         .json::<Response>()
         .await
-        .expect("Parse failed")
+        .unwrap_or_else(|_| panic!("Parse failed for request {nice_query}"))
 }
 
 fn anime_name(title: &str) -> String {
     let ignore_dirs = ["season", "movies", "music"];
     title
-        .to_owned()
         .split(path::MAIN_SEPARATOR_STR)
         .collect::<Vec<&str>>()
         .into_iter()
@@ -121,5 +124,9 @@ mod tests {
     #[test]
     fn just_name() {
         assert_eq!(anime_name("name here"), "name here".to_string());
+    }
+    #[test]
+    fn uzumaki() {
+        assert_eq!(anime_name("E:\\anime\\Uzumaki"), "Uzumaki".to_string());
     }
 }

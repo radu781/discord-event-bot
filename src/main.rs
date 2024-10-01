@@ -1,5 +1,4 @@
 use clap::Parser;
-use dotenv;
 mod anilist;
 mod messages;
 use messages::message_type::MessageType;
@@ -26,7 +25,7 @@ impl EventHandler for Handler {
     }
 }
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 struct Cli {
     #[command(subcommand)]
     type_: MessageType,
@@ -37,6 +36,7 @@ async fn main() {
     dotenv::dotenv().ok();
     let token = env::var("token").expect("Expected a token in the environment");
     let args = Cli::parse();
+    println!("{:?}", args);
     let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT;
 
     let mut client = Client::builder(&token, intents)

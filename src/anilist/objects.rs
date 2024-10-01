@@ -2,7 +2,9 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub(crate) struct Title {
-    pub(crate) english: String,
+    pub(crate) english: Option<String>,
+    pub(crate) romaji: Option<String>,
+    pub(crate) native: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -15,8 +17,7 @@ pub(crate) struct CoverImage {
 pub(crate) struct Episode {
     #[serde(rename = "airingAt")]
     pub(crate) airing_at: u32,
-
-    pub(crate) episode: u16,
+    // pub(crate) episode: u16,
 }
 
 #[derive(Deserialize)]
@@ -31,10 +32,9 @@ pub(crate) struct Media {
     #[serde(rename = "seasonYear")]
     pub(crate) season_year: u16,
 
-    pub(crate) episodes: Option<u16>,
+    // pub(crate) episodes: Option<u16>,
 
-    pub(crate) status: String,
-
+    // pub(crate) status: String,
     #[serde(rename = "nextAiringEpisode")]
     pub(crate) next_airing_episode: Option<Episode>,
 }

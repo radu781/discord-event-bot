@@ -3,7 +3,7 @@ use clap::Subcommand;
 use serenity::all::{ChannelId, CreateMessage};
 use std::env;
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Debug)]
 pub(crate) enum MessageType {
     Torrent(TorrentMessage),
 }
