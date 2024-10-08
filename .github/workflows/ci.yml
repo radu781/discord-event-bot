@@ -11,3 +11,10 @@ jobs:
           profile: minimal
           toolchain: stable
           components: rustfmt, clippy
+      - name: Check build errors
+        run: cargo build
+      - name: Check lints
+        run: cargo clippy --no-deps -- -D warnings
+        if: always()
+      - name: Check format
+        run: cargo fmt
