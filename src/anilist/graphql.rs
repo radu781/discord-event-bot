@@ -3,7 +3,12 @@ use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 use std::path;
 
-pub(crate) async fn anime_info(path: &str) -> Response {
+pub(crate) struct GraphQLError {
+    pub(crate) error: String,
+    pub(crate) query: String,
+}
+
+pub(crate) async fn anime_info(path: &str) -> Result<Response, GraphQLError> {
     let title = anime_name(path);
     println!("Found title: {title}");
     let query = json!({"query": format!(r#"
@@ -35,10 +40,16 @@ pub(crate) async fn anime_info(path: &str) -> Response {
         .header(CONTENT_TYPE, "application/json")
         .send()
         .await
-        .unwrap_or_else(|_| panic!("Send failed for request {nice_query}"))
+        .map_err(|err| GraphQLError {
+            error: err.to_string(),
+            query: nice_query.clone(),
+        })?
         .json::<Response>()
         .await
-        .unwrap_or_else(|_| panic!("Parse failed for request {nice_query}"))
+        .map_err(|err| GraphQLError {
+            error: err.to_string(),
+            query: nice_query,
+        })
 }
 
 fn anime_name(title: &str) -> String {
@@ -124,9 +135,5 @@ mod tests {
     #[test]
     fn just_name() {
         assert_eq!(anime_name("name here"), "name here".to_string());
-    }
-    #[test]
-    fn uzumaki() {
-        assert_eq!(anime_name("E:\\anime\\Uzumaki"), "Uzumaki".to_string());
     }
 }

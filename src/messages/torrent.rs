@@ -110,33 +110,42 @@ impl Category {
         match self {
             Category::Anime => match save_path {
                 Some(path) => {
-                    let info = anime_info(path).await;
-                    let media_title = info.data.media.title;
-                    let title = media_title.english.unwrap_or(media_title.romaji.unwrap_or(
-                        media_title.native.unwrap_or_else(|| {
-                            eprintln!("No title language found");
-                            "???".to_owned()
-                        }),
-                    ));
+                    match anime_info(path).await {
+                        Ok(info) => {
+                            let media_title = info.data.media.title;
+                            let title =
+                                media_title.english.unwrap_or(media_title.romaji.unwrap_or(
+                                    media_title.native.unwrap_or_else(|| {
+                                        eprintln!("No title language found");
+                                        "???".to_owned()
+                                    }),
+                                ));
 
-                    embed = embed
-                        .image(info.data.media.cover_image.extra_large)
-                        .title(format!("{title} download done"))
-                        .field(
-                            "Airing season",
-                            format!(
-                                "{} {}",
-                                info.data.media.season_year,
-                                info.data.media.season.to_lowercase()
-                            ),
-                            false,
-                        );
-                    if let Some(next) = info.data.media.next_airing_episode {
-                        embed = embed.field(
-                            "Next episode",
-                            format!("<t:{}:R> <t:{}:F>", next.airing_at, next.airing_at),
-                            false,
-                        );
+                            embed = embed
+                                .image(info.data.media.cover_image.extra_large)
+                                .title(format!("{title} download done"))
+                                .field(
+                                    "Airing season",
+                                    format!(
+                                        "{} {}",
+                                        info.data.media.season_year,
+                                        info.data.media.season.to_lowercase()
+                                    ),
+                                    false,
+                                );
+                            if let Some(next) = info.data.media.next_airing_episode {
+                                embed = embed.field(
+                                    "Next episode",
+                                    format!("<t:{}:R> <t:{}:F>", next.airing_at, next.airing_at),
+                                    false,
+                                );
+                            }
+                        }
+                        Err(err) => {
+                            embed = embed.title("Download error");
+                            embed = embed.field("Error", err.error, false);
+                            embed = embed.field("Query", err.query, false);
+                        }
                     }
                     embed
                 }
